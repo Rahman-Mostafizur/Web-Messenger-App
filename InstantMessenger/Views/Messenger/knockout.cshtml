@@ -1,0 +1,72 @@
+﻿
+@{
+    ViewBag.Title = "knockout";
+}
+
+<link href="~/Content/bootstrap.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.9.1.js"></script>
+<script src="~/Scripts/knockout-3.5.1.js"></script>
+<script src="~/Scripts/jquery.signalR-2.4.1.js"></script>
+<script src="~/signalR/js"></script>
+
+
+<div class="container form-horizontal">
+    <br />
+    <h1 data-bind="text: data.userName"></h1>
+    <div class="input-group">
+        <div class="input-group-addon">
+            <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+            <span class="input-group-text" id="" data-bind="text: data.userName"></span>
+        </div>
+        <input class="form-control " style="width:80%" placeholder="type message here..." data-bind="value: data.message" />
+        <button class="btn btn-info form-control " id="btnSend" style="width:20%" data-bind="click: sendText">Send</button>
+    </div>
+
+    <hr />
+    <dl id="dialog" class="bg-success " data-bind="foreach : data.MessageList">
+        <dt data-bind="text: Sender"></dt>
+        <dd data-bind="text: Content"></dd>
+    </dl>
+</div>
+
+<script>
+
+    var hub = $.connection.messenger;
+    var connected = false;
+
+    var data = {
+        userName: ko.observable(),
+        message: ko.observable(),
+        MessageList: ko.observableArray([])
+    }
+
+    function sendText() {
+
+        if (connected) {
+
+            hub.server.sendMessage(data.userName(), data.message());
+            data.message(null);
+        }
+    }
+
+	hub.client.receive = function (msg) {
+        data.MessageList.push(msg);
+    }
+    hub.client.receiveLog = function (messageList) {
+        data.MessageList(messageList);
+    }
+
+    
+    $.connection.hub.start().done(function () {
+        connected = true;
+        var username = prompt("Enter your name");
+        data.userName(username);
+        hub.server.getLog();
+    });
+
+
+    ko.applyBindings();
+
+</script>
+
+

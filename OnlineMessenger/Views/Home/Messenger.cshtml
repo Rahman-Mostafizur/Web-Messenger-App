@@ -1,0 +1,63 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@{
+    Layout = "~/Views/shared/_Layout.cshtml";
+}
+
+
+<script src="~/Scripts/jquery.signalR-2.4.1.js"></script>
+<script src="~/signalr/js"></script>
+
+<div>
+    <label for="txtMessage">Message</label>
+    <input id="txtMessage" placeholder="type message here..." />
+    <button id="btnSend">Send</button>
+    <hr />
+    <dl id="dialog"></dl>
+</div>
+
+
+<script>
+
+    var hub = $.connection.messengerHub;
+    var connected = false;
+
+    hub.client.receiveLog = function (messages) {
+
+        $('#dialog').html(null);
+
+        $.each(messages, function (k, msg) {
+            $('#dialog').append('<dt>' + msg['Sender'] + '</dt>');
+            $('#dialog').append('<dd>' + msg['Content'] + '</dd>');
+
+        });
+
+
+
+    }
+
+    hub.client.receive = function (user, message) {
+        $('#dialog').append('<dt>' + user + '</dt>');
+        $('#dialog').append('<dd>' + message + '</dd>');
+    }
+
+    $('#btnSend').click(function () {
+        if (connected) {
+
+            var msg = $('#txtMessage').val();
+            $('#txtMessage').val(null);
+            hub.server.sendMessage(msg);
+
+        }
+    });
+
+
+    $.connection.hub.start().done(function () {
+        connected = true;
+        hub.server.getMessages();
+    });
+
+
+
+</script>

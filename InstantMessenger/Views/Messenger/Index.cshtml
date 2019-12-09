@@ -1,0 +1,102 @@
+﻿@{
+    Layout = "~/Views/shared/_Layout.cshtml";
+}
+<link href="~/Content/bootstrap.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.9.1.js"></script>
+<script src="~/Scripts/jquery.signalR-2.4.1.js"></script>
+<script src="~/signalr/js"></script>
+
+
+<div class="container form-horizontal">
+    <div class="form-group row">
+        <span class="col-md-6 ">
+            <input class="form-control " type="radio" name="messageType" value="file" />
+            File
+        </span>
+        <span class="col-md-6 ">
+            <input class="form-control " type="radio" name="messageType" value="text" />
+            Text
+        </span>
+    </div>
+    <br />
+    <div class="form-group row">
+        <label class="control-label col-lg-5" for="txtMessage">Message</label>
+        <input class="form-control  col-lg-7" id="txtMessage" placeholder="type message here..." />
+    </div>
+     <div class="form-group row">
+        <label class="control-label col-lg-5" for="txtMessage">File</label>
+        <input class="form-control  col-lg-7" id="txtFile" placeholder="select file..." />
+    </div>
+    <button class="btn btn-info " id="btnSend">Send</button>
+    <hr />
+    <dl id="dialog" class="bg-success "></dl>
+</div>
+
+<script>
+
+    var hub = $.connection.messenger;
+    var connected = false;
+    var username;
+
+    hub.client.receive = function (msg) {
+        $('#dialog').append('<dt>' + msg['Sender'] + '</dt>');
+        $('#dialog').append('<dd>' + msg['Content'] + '</dd>');
+    }
+
+     hub.client.receiveFile = function (user, file) {
+        
+         //window.FileReader
+
+
+    }
+
+
+    hub.client.receiveLog = function (messageList) {
+
+        $('#dialog').html(null);
+
+        $.each(messageList, function (idx, msg) {
+
+            $('#dialog').append(`<dt>${msg["Sender"]} <span class="text-right text-muted">${msg["Time"]}</span></dt>`);
+            //$('#dialog').append('<dt>' + msg["Sender"] + '</dt>');
+            $('#dialog').append(`<dd >${msg["Content"]}</dd>`);
+
+        })
+
+
+
+    }
+
+
+    $('#btnSend').click(function () {
+        if (connected) {
+
+            if ($("input[name='messageType']:checked").val() == "file") 
+            {
+                var file = $('#txtFile').val();
+                $('#txtFile').val(null);
+                hub.server.sendFile(username, file);
+            }
+            else 
+            {
+                var msg = $('#txtMessage').val();
+                $('#txtMessage').val(null);
+                hub.server.sendMessage(username, msg);
+            }
+
+
+
+
+        }
+    });
+
+    $.connection.hub.start().done(function () {
+        connected = true;
+        username = prompt("Enter your name");
+
+        hub.server.getLog();
+    });
+
+
+
+</script>
